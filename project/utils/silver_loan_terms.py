@@ -1,9 +1,11 @@
 import logging
-import pandas as pd
+from pyspark.sql.functions import col, when
+from pyspark.sql import DataFrame
 
-def process_loan_terms(path):
-    df = pd.read_parquet(path)
-    logging.info(f"Loaded loan terms data with shape {df.shape}")
+
+def process_loan_terms(spark, path: str) -> DataFrame:
+    df = spark.read.parquet(path)
+    logging.info(f"Loaded loan terms data with {df.count()} rows and {len(df.columns)} columns")
 
     # Drop Features Marked In Red According to Data Dictionary File
     drop_columns = [
@@ -15,10 +17,10 @@ def process_loan_terms(path):
         "total_pymnt_inv", "total_rec_prncp", "total_rec_int", "total_rec_late_fee", "recoveries", "collection_recovery_fee", 
         "last_pymnt_d", "next_pymnt_d", "last_pymnt_amnt", "policy_code"
     ]
-    df.drop(columns=drop_columns, inplace=True, errors='ignore')
+    df = df.drop(*drop_columns)
 
     # Convert Y/N values to 0/1
-    df["pymnt_plan"] = df["pymnt_plan"].map({"y": 1, "n": 0})
+    df = df.withColumn("pymnt_plan", when(col("pymnt_plan") == "y", 1).otherwise(0))
 
     logging.info("Loan terms processing complete")
     return df
