@@ -19,7 +19,8 @@ def silver_processing(data_dir, output_dir, data_window=None):
     logging.basicConfig(
         filename="logs/silver_processing.log",
         level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s"
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        force=True 
     )
 
     # === Files and Directories ===
@@ -38,7 +39,7 @@ def silver_processing(data_dir, output_dir, data_window=None):
     for category, processor in categories.items():
         logging.info(f"Processing {category} data")
 
-        df = processor(spark, str(data_dir / f"features_{category}"))
+        df = processor(spark, str(data_dir / f"features_{category}.csv"))
 
         if data_window is not None:
             df = df.filter(col("snapshot_date").cast("date").isin(data_window))
@@ -46,6 +47,7 @@ def silver_processing(data_dir, output_dir, data_window=None):
         category_output_dir = output_dir / category
         category_output_dir.mkdir(parents=True, exist_ok=True)
 
+        logging.info(f"Writing {category} data...")
         for row in df.select("snapshot_date").distinct().collect():
             snapshot_date = row["snapshot_date"]
             date_str = snapshot_date.strftime("%Y-%m-%d")

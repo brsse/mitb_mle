@@ -4,7 +4,7 @@ from pyspark.sql import DataFrame
 
 
 def process_demographic(spark, path: str) -> DataFrame:
-    df = spark.read.parquet(path)
+    df = spark.read.option("header", True).option("inferSchema", True).csv(path)
     logging.info(f"Loaded demographic data with {df.count()} rows and {len(df.columns)} columns")
     
     # Drop Features Marked In Red According to Data Dictionary File

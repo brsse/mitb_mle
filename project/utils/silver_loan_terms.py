@@ -4,7 +4,7 @@ from pyspark.sql import DataFrame
 
 
 def process_loan_terms(spark, path: str) -> DataFrame:
-    df = spark.read.parquet(path)
+    df = spark.read.option("header", True).option("inferSchema", True).csv(path)
     logging.info(f"Loaded loan terms data with {df.count()} rows and {len(df.columns)} columns")
 
     # Drop Features Marked In Red According to Data Dictionary File
@@ -19,8 +19,11 @@ def process_loan_terms(spark, path: str) -> DataFrame:
     ]
     df = df.drop(*drop_columns)
 
-    # Convert Y/N values to 0/1
+    # Convert binary string values to 0/1
     df = df.withColumn("pymnt_plan", when(col("pymnt_plan") == "y", 1).otherwise(0))
-
+    df = df.withColumn("debt_settlement_flag", when(col("debt_settlement_flag") == "Y", 1).otherwise(0))
+    df = df.withColumn("initial_list_status", when(col("initial_list_status") == "w", 1).otherwise(0))
+    df = df.withColumn("disbursement_method", when(col("disbursement_method") == "Cash", 1).otherwise(0))
+    
     logging.info("Loan terms processing complete")
     return df
