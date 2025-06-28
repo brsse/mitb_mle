@@ -1,1 +1,1 @@
-github
+https://github.com/brsse/mitb_mle/tree/main/assignment/assignment2
